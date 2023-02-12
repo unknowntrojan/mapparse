@@ -1,3 +1,6 @@
+/// mapparse .map parser for the aimware self-leak
+///
+/// made by unknowntrojan#2814
 use anyhow::{Context, Result};
 
 //
