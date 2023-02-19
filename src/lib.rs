@@ -2,6 +2,7 @@
 ///
 /// made by unknowntrojan#2814
 use anyhow::{Context, Result};
+use msvc_demangler::{CallingConv, StorageClass, Type};
 
 //
 // This particular map file is composed like this:
@@ -492,19 +493,21 @@ fn parse() {
 
     for symbol in &map.static_symbols {
         println!(
-            "Static Symbol {} at rva {:#04X} ({}:{:#04X}) with flags {:?} in {:?}",
+            "Static Symbol {} at rva {:#04X} ({}:{:#04X}) with flags {:?} in {:?} {}",
             symbol.symbol,
             symbol.rva.0,
             symbol.addr.seg,
             symbol.addr.addr,
             symbol.flags,
-            symbol.libobj
+            symbol.libobj,
+            &msvc_demangler::demangle(symbol.symbol, msvc_demangler::DemangleFlags::COMPLETE)
+                .unwrap_or(symbol.symbol.to_owned())
         )
     }
 }
 
 #[test]
-fn export() {
+fn export_ida() {
     fn fix_name_for_ida(name: &str) -> String {
         name.chars()
             .map(|x| {
@@ -514,6 +517,15 @@ fn export() {
                     true => x,
                     false => '_',
                 }
+            })
+            .collect()
+    }
+
+    fn fix_mangled_symbol(sym: &str) -> String {
+        sym.chars()
+            .map(|x| match "<>".contains(x) {
+                true => '_',
+                false => x,
             })
             .collect()
     }
@@ -529,12 +541,13 @@ fn export() {
     for function in &map.functions {
         output.push_str(
             format!(
-                "{} {}\n",
+                "{} {} {}\n",
                 function.rva.0 + map.preferred_load_addr,
                 fix_name_for_ida(
                     &msvc_demangler::demangle(function.symbol, flags)
                         .unwrap_or(function.symbol.to_owned())
-                )
+                ),
+                fix_mangled_symbol(function.symbol)
             )
             .as_str(),
         );
@@ -543,16 +556,17 @@ fn export() {
     for symbol in &map.static_symbols {
         output.push_str(
             format!(
-                "{} {}\n",
+                "{} {} {}\n",
                 symbol.rva.0 + map.preferred_load_addr,
                 fix_name_for_ida(
                     &msvc_demangler::demangle(symbol.symbol, flags)
                         .unwrap_or(symbol.symbol.to_owned())
-                )
+                ),
+                fix_mangled_symbol(symbol.symbol)
             )
             .as_str(),
         );
     }
 
-    std::fs::write("output.idasym", output).unwrap();
+    std::fs::write("ida.sym", output).unwrap();
 }
