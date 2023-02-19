@@ -1,5 +1,3 @@
 /target
-output.sym
-parsed.txt
-binja.sym
-ida.sym
+*.sym
+*.idb

@@ -8,4 +8,4 @@ you obviously have to have the leak's dll loaded in ida.
 
 i included the map file from the leak so you can fuck around with the parsing.
 
-![After applying symbols](https://i.imgur.com/fY0u3qS.png)
+![After applying symbols](https://i.imgur.com/2KpZMs1.png)
